@@ -12,6 +12,7 @@ It needs sudo rights to do that.
 
 ## Usage:
 To install the Max! Software you just need two steps:
+
 	- Download the maxapp_linux_installer.sh script.
 	- Run 'sh maxapp_linux_installer.sh --install' from a terminal.
 
