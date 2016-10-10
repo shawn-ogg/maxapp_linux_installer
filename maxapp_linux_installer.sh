@@ -6,14 +6,14 @@
 # a win and mac os installation package. This script downloads the mac package,
 # extracts the java code, adjusts the startup script and provides a .desktop
 # file for a seamless desktop environment integration.
-#  
+#
 # This Max! system is sold by elv. For more infromation see:
 # 	- https://www.max-portal.elv.de/
 #	- http://www.elv.de/forum/max-funk-heizungsregler-system.html
 #
 # This script is tested successfully on:
 #	- (l)ubuntu 16.04
-# - debian 8
+#	- debian 8
 #
 # License: MIT
 # Copyright: Tobias Farrenkopf tf@emptyset.de
@@ -24,7 +24,8 @@
 URL="http://www.max-portal.elv.de:8181/downloadELV/MAXApp_ELV.dmg"
 MAX_INST_DIR="/opt/MAX_APP"
 MAX_DESKTOP_FILE="/usr/share/applications/max-app.desktop"
-MOUNTPOINT="/tmp/max_img_$$"
+TEMPDIR="/tmp/maxapp_installer"
+MOUNTPOINT="/${TEMPDIR}/max_img_$$"
 
 ##############################
 # Functions
@@ -33,7 +34,7 @@ check_program() {
 	if ! dpkg-query -W "$1" > /dev/null 2>&1; then
 		echo
 		echo "Dependency \"$1\" is missing." 
-		echo "Should I try to intall it? [y/N]"
+		echo "Should I try to install it? [y/N]"
 		read -r response 
 		case $response in 
 		[yY][eE][sS]|[yY]) 
@@ -69,7 +70,9 @@ dependency_checks() {
 }
 	
 install_maxapp() {
-	
+	mkdir -p "$TEMPDIR" || exit 1
+	cd "$TEMPDIR"
+
 	echo
 	echo "Downloading the MAX! App..."
 	echo
@@ -81,7 +84,7 @@ install_maxapp() {
 
 	dmg2img mac.dmg mac.img >/dev/null
 	
-	mkdir -p $MOUNTPOINT || exit 1
+	mkdir -p "$MOUNTPOINT" || exit 1
 	
 	sudo mkdir -p "$MAX_INST_DIR/icons"
 	sudo mount -t hfsplus -o loop mac.img $MOUNTPOINT
@@ -89,11 +92,15 @@ install_maxapp() {
 	sudo icns2png -o "${MAX_INST_DIR}/icons" -x "${MOUNTPOINT}/MAX!.app/Contents/Resources/maxicon.icns" >/dev/null
 	sudo umount "$MOUNTPOINT"
 	
-	rmdir $MOUNTPOINT
+	rmdir "$MOUNTPOINT"
+	rm -f mac.img
+	rm -f mac.dmg
+	cd -
+	rmdir "$TEMPDIR"
 	
 	sudo tee "${MAX_INST_DIR}/start.sh" >/dev/null <<EOF
 #!/bin/sh
-cd ${MAX_INST_DIR}/Java
+cd "${MAX_INST_DIR}/Java"
 java -jar MaxLocalApp.jar
 EOF
 
